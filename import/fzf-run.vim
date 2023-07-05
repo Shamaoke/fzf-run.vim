@@ -17,7 +17,7 @@ def SetExitCb( ): func(job, number): string
 
 enddef
 
-def SetCloseCb(config: dict<any>, file: string): func(channel): string
+def SetCloseCb(spec: dict<any>, file: string): func(channel): string
 
   def Callback(channel: channel): string
     var data: list<string> = readfile(file)
@@ -31,7 +31,7 @@ def SetCloseCb(config: dict<any>, file: string): func(channel): string
 
     var commands: list<string>
 
-    commands = [':$bwipeout', config['commands'][key](entry), $"call delete('{file}')"]
+    commands = [':$bwipeout', spec['commands'][key](entry), $"call delete('{file}')"]
 
     return execute(commands)
   enddef
@@ -40,57 +40,57 @@ def SetCloseCb(config: dict<any>, file: string): func(channel): string
 
 enddef
 
-def ExtendTermCommandOptions(config: dict<any>): list<string>
+def ExtendTermCommandOptions(spec: dict<any>): list<string>
   var extensions = [ ]
 
-  return config.term_command->extendnew(extensions)
+  return spec.term_command->extendnew(extensions)
 enddef
 
-def ExtendTermOptions(config: dict<any>): dict<any>
-  var tmp_file = config.tmp_file()
+def ExtendTermOptions(spec: dict<any>): dict<any>
+  var tmp_file = spec.tmp_file()
 
   var extensions =
     { 'out_name': tmp_file,
       'exit_cb':  SetExitCb(),
-      'close_cb': SetCloseCb(config, tmp_file) }
+      'close_cb': SetCloseCb(spec, tmp_file) }
 
-  return config.term_options->extendnew(extensions)
+  return spec.term_options->extendnew(extensions)
 enddef
 
-def ExtendPopupOptions(config: dict<any>): dict<any>
+def ExtendPopupOptions(spec: dict<any>): dict<any>
   var extensions =
-    { 'minwidth':  (&columns * config['geometry']->get('width'))->ceil()->float2nr(),
-      'minheight': (&lines * config['geometry']->get('height'))->ceil() ->float2nr() }
+    { 'minwidth':  (&columns * spec['geometry']->get('width'))->ceil()->float2nr(),
+      'minheight': (&lines * spec['geometry']->get('height'))->ceil() ->float2nr() }
 
-   return config.popup_options->extendnew(extensions)
+   return spec.popup_options->extendnew(extensions)
 enddef
 
-def SetFzfCommand(config: dict<any>): void
-  $FZF_DEFAULT_COMMAND = config.fzf_command(config.fzf_data())
+def SetFzfCommand(spec: dict<any>): void
+  $FZF_DEFAULT_COMMAND = spec.fzf_command(spec.fzf_data())
 enddef
 
-def RestoreFzfCommand(config: dict<any>): void
-  $FZF_DEFAULT_COMMAND = config->get('fzf_default_command')
+def RestoreFzfCommand(spec: dict<any>): void
+  $FZF_DEFAULT_COMMAND = spec->get('fzf_default_command')
 enddef
 
-def CreateFzfPopup(config: dict<any>): void
+def CreateFzfPopup(spec: dict<any>): void
   term_start(
-    config
+    spec
       ->ExtendTermCommandOptions(),
-    config
+    spec
       ->ExtendTermOptions())
     ->popup_create(
-        config
+        spec
           ->ExtendPopupOptions())
 enddef
 
-export def Run(config: dict<any>): void
-  SetFzfCommand(config)
+export def Run(spec: dict<any>): void
+  SetFzfCommand(spec)
 
   try
-    CreateFzfPopup(config)
+    CreateFzfPopup(spec)
   finally
-    RestoreFzfCommand(config)
+    RestoreFzfCommand(spec)
   endtry
 enddef
 
