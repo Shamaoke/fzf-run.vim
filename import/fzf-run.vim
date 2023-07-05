@@ -17,9 +17,10 @@ def SetExitCb( ): func(job, number): string
 
 enddef
 
-def SetCloseCb(spec: dict<any>, file: string): func(channel): string
+def SetCloseCb(spec: dict<any>): func(channel): string
 
   def Callback(channel: channel): string
+    var file = spec['tmp_file']
     var data: list<string> = readfile(file)
 
     if data->len() < 2
@@ -47,14 +48,14 @@ def ExtendTermCommandOptions(spec: dict<any>): list<string>
 enddef
 
 def ExtendTermOptions(spec: dict<any>): dict<any>
-  var tmp_file = spec.tmp_file()
+  var extensions_a = spec->extendnew({'tmp_file': spec.set_tmp_file()})
 
-  var extensions =
-    { 'out_name': tmp_file,
+  var extensions_b =
+    { 'out_name': extensions_a['tmp_file'],
       'exit_cb':  SetExitCb(),
-      'close_cb': SetCloseCb(spec, tmp_file) }
+      'close_cb': SetCloseCb(extensions_a) }
 
-  return spec.term_options->extendnew(extensions)
+  return extensions_a.term_options->extendnew(extensions_b)
 enddef
 
 def ExtendPopupOptions(spec: dict<any>): dict<any>
