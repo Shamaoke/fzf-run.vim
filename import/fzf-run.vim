@@ -70,7 +70,7 @@ def ExtendPopupOptions(spec: dict<any>): dict<any>
 enddef
 
 def SetFzfCommand(spec: dict<any>): void
-  $FZF_DEFAULT_COMMAND = spec.fzf_command(spec.fzf_data())
+  $FZF_DEFAULT_COMMAND = spec.set_fzf_command(spec.set_fzf_data())
 enddef
 
 def RestoreFzfCommand(spec: dict<any>): void
