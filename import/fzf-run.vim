@@ -48,14 +48,17 @@ def ExtendTermCommandOptions(spec: dict<any>): list<string>
 enddef
 
 def ExtendTermOptions(spec: dict<any>): dict<any>
-  var extensions_a = spec->extendnew({'tmp_file': spec.set_tmp_file()})
+  var extensions_a =
+    { 'tmp_file': spec.set_tmp_file() }
+
+  var spec_extended = spec->extendnew(extensions_a)
 
   var extensions_b =
-    { 'out_name': extensions_a['tmp_file'],
+    { 'out_name': spec_extended['tmp_file'],
       'exit_cb':  SetExitCb(),
-      'close_cb': SetCloseCb(extensions_a) }
+      'close_cb': SetCloseCb(spec_extended) }
 
-  return extensions_a.term_options->extendnew(extensions_b)
+  return spec_extended.term_options->extendnew(extensions_b)
 enddef
 
 def ExtendPopupOptions(spec: dict<any>): dict<any>
