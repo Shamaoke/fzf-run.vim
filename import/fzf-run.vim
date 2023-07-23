@@ -3,8 +3,6 @@ vim9script
 # ::: Fzf Run ::: #
 ##               ##
 
-echomsg 'Portable Fzf Run loaded!'
-
 def SetExitCb( ): func(job, number): string
 
   def Callback(job: job, status: number): string
