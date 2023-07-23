@@ -3,6 +3,8 @@ vim9script
 # ::: Fzf Run ::: #
 ##               ##
 
+echomsg 'Portable Fzf Run loaded!'
+
 def SetExitCb( ): func(job, number): string
 
   def Callback(job: job, status: number): string
@@ -41,9 +43,7 @@ def SetCloseCb(spec: dict<any>): func(channel): string
 
 enddef
 
-def ExtendTermCommandOptions(spec: dict<any>): list<string>
-  var extensions = [ ]
-
+def ExtendTermCommandOptions(spec: dict<any>, extensions: list<string>): list<string>
   return spec.term_command->extendnew(extensions)
 enddef
 
@@ -80,7 +80,7 @@ enddef
 def CreateFzfPopup(spec: dict<any>): void
   term_start(
     spec
-      ->ExtendTermCommandOptions(),
+      ->ExtendTermCommandOptions(spec.set_term_command_options()),
     spec
       ->ExtendTermOptions())
     ->popup_create(
