@@ -20,11 +20,13 @@ enddef
 def SetCloseCb(spec: dict<any>): func(channel): string
 
   def Callback(channel: channel): string
-    var file = spec['tmp_file']
-    var data: list<string> = readfile(file)
+    var tmp_file = spec['tmp_file']
+    var tmp_data = spec['tmp_data']
+
+    var data: list<string> = readfile(tmp_file)
 
     if data->len() < 2
-      return execute([':$bwipeout', $"call delete('{file}')"])
+      return execute([':$bwipeout', $"call delete('{tmp_file}')", $"call delete('{tmp_data}')"])
     endif
 
     var key   = data->get(0)
@@ -32,7 +34,12 @@ def SetCloseCb(spec: dict<any>): func(channel): string
 
     var commands: list<string>
 
-    commands = [':$bwipeout', spec['commands'][key](entry), $"call delete('{file}')"]
+    commands = [
+      ':$bwipeout',
+      spec['commands'][key](entry),
+      $"call delete('{tmp_file}')",
+      $"call delete('{tmp_data}')",
+    ]
 
     return execute(commands)
   enddef
@@ -46,17 +53,12 @@ def ExtendTermCommandOptions(spec: dict<any>, extensions: list<string>): list<st
 enddef
 
 def ExtendTermOptions(spec: dict<any>): dict<any>
-  var extensions_a =
-    { 'tmp_file': spec.set_tmp_file() }
-
-  var spec_extended = spec->extendnew(extensions_a)
-
-  var extensions_b =
-    { 'out_name': spec_extended['tmp_file'],
+  var extension =
+    { 'out_name': spec['tmp_file'],
       'exit_cb':  SetExitCb(),
-      'close_cb': SetCloseCb(spec_extended) }
+      'close_cb': SetCloseCb(spec) }
 
-  return spec_extended.term_options->extendnew(extensions_b)
+  return spec.term_options->extendnew(extension)
 enddef
 
 def ExtendPopupOptions(spec: dict<any>): dict<any>
@@ -67,33 +69,31 @@ def ExtendPopupOptions(spec: dict<any>): dict<any>
    return spec.popup_options->extendnew(extensions)
 enddef
 
-def SetFzfCommand(spec: dict<any>): void
-  $FZF_DEFAULT_COMMAND = spec.set_fzf_command(spec.set_fzf_data())
+def SetTmpFiles(spec: dict<any>): dict<any>
+  var extension = spec->extendnew(
+    { 'tmp_file': spec.set_tmp_file(),
+      'tmp_data': spec.set_tmp_data()  })
+
+  return extension
 enddef
 
-def RestoreFzfCommand(spec: dict<any>): void
-  $FZF_DEFAULT_COMMAND = spec->get('fzf_default_command')
-enddef
-
-def CreateFzfPopup(spec: dict<any>): void
-  term_start(
-    spec
-      ->ExtendTermCommandOptions(spec.set_term_command_options()),
-    spec
-      ->ExtendTermOptions())
-    ->popup_create(
-        spec
-          ->ExtendPopupOptions())
+def SetFzfData(spec: dict<any>): void
+  spec.set_fzf_data(spec['tmp_data'])
 enddef
 
 export def Run(spec: dict<any>): void
-  SetFzfCommand(spec)
+  var new_spec = SetTmpFiles(spec)
 
-  try
-    CreateFzfPopup(spec)
-  finally
-    RestoreFzfCommand(spec)
-  endtry
+  SetFzfData(new_spec)
+
+  term_start(
+    new_spec
+      ->ExtendTermCommandOptions(new_spec.set_term_command_options(new_spec['tmp_data'])),
+    new_spec
+      ->ExtendTermOptions())
+    ->popup_create(
+        new_spec
+          ->ExtendPopupOptions())
 enddef
 
 # vim: set textwidth=80 colorcolumn=80:
